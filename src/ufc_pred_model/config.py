@@ -7,12 +7,9 @@ DATA_PATHS = {
     "stats_dir": DATA_ROOT / "Fighter-stats",
 }
 
-
 def verify_integrity() -> list[str]:
     """Return the names of configured data directories that do not exist."""
     return [name for name, path in DATA_PATHS.items() if not path.is_dir()]
-
-
 
 def verify_intergrity() -> list[str]:
     """Backward-compatible alias for the misspelled original function."""
