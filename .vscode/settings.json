@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^/Users/dimon776/Desktop/Projects/UFC-Prediction-Model/ufc_pred_model\\.worktrees/logistic-regression-modeling-snippet/\\.venv/bin/python -c \"from ufc_pred_model\\.config import DATA_PATHS; import pandas as pd; p=DATA_PATHS\\['med_dir'\\] / 'medium_dataset\\.csv'; print\\(DATA_PATHS\\); print\\(p, p\\.exists\\(\\), pd\\.read_csv\\(p\\)\\.shape\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
