@@ -3,7 +3,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data" / "UFC-dataset"
 DATA_PATHS = {
-    "large_set": DATA_ROOT / "Large-set",
+    "large_dir": DATA_ROOT / "Large-set",
+    "med_dir": DATA_ROOT / "Medium-set",
     "stats_dir": DATA_ROOT / "Fighter-stats",
 }
 
