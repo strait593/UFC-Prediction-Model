@@ -1,10 +1,54 @@
 # Python-generated files
 __pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
+*.py[cod]
+*$py.class
+
+# Build and packaging output
+/build/
+/dist/
+/wheels/
+*.egg-info/
 
 # Virtual environments
-.venv
+.venv/
+venv/
+env/
+ENV/
+/ufc-prediction-model/
+/Lib/
+/share/
+/pyvenv.cfg
+/scripts/activate*
+/scripts/deactivate.*
+/scripts/activate_this.py
+/scripts/*.exe
+/scripts/pydoc.bat
+
+# Local environment and editor files
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+
+# Notebook and tool caches
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+CACHEDIR.TAG
+/.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Generated datasets and model artifacts
+/large_clean.csv
+/data/large_clean.csv
+*.pkl
+*.pickle
+*.joblib
+*.onnx
