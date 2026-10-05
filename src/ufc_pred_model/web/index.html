@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101311">
+    <title>Octagon | UFC bout predictor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101311;
+        --panel: #181c19;
+        --panel-raised: #202521;
+        --line: #303731;
+        --muted: #939d95;
+        --text: #f3f5f1;
+        --red: #f25450;
+        --blue: #4da3ff;
+        --lime: #c9f36a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        background:
+          radial-gradient(ellipse at 82% 0%, #293326 0, transparent 34rem),
+          var(--bg);
+        font-family: "DM Sans", sans-serif;
+      }
+      .shell { max-width: 1100px; margin: 0 auto; padding: 0 28px 70px; }
+      header {
+        height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #ffffff12;
+      }
+      .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: .14em; }
+      .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; border: 2px solid var(--lime); transform: rotate(45deg); }
+      .brand-mark span { color: var(--lime); font: 700 10px "DM Mono", monospace; transform: rotate(-45deg); }
+      .top-note, .eyebrow, .corner-label, .mono { font-family: "DM Mono", monospace; text-transform: uppercase; letter-spacing: .12em; }
+      .top-note { color: var(--muted); font-size: 10px; }
+      main { padding-top: 64px; }
+      .intro { max-width: 660px; margin-bottom: 36px; }
+      .eyebrow { color: var(--lime); font-size: 11px; }
+      h1 { margin: 14px 0 12px; font: 600 clamp(42px, 7vw, 76px)/.98 "Oswald", sans-serif; letter-spacing: -.02em; text-transform: uppercase; }
+      .intro p { color: var(--muted); max-width: 550px; line-height: 1.65; margin: 0; }
+      .card { background: linear-gradient(145deg, #1b201c, #151916); border: 1px solid var(--line); border-radius: 8px; }
+      .matchup { padding: 24px; }
+      .corner-grid { display: grid; grid-template-columns: 1fr 72px 1fr; align-items: end; gap: 18px; }
+      .corner-label { display: block; margin: 0 0 11px; font-size: 10px; }
+      .corner-red { color: var(--red); }
+      .corner-blue { color: var(--blue); }
+      .field-wrap { position: relative; }
+      input, select {
+        width: 100%;
+        height: 52px;
+        padding: 0 14px;
+        border-radius: 4px;
+        border: 1px solid #3a423b;
+        outline: 0;
+        color: var(--text);
+        background: #111512;
+        font: 500 15px "DM Sans", sans-serif;
+        transition: border-color .15s;
+      }
+      input:focus, select:focus { border-color: var(--lime); }
+      input::placeholder { color: #707a72; }
+      .versus { align-self: end; padding-bottom: 16px; text-align: center; color: #616b63; font: 600 18px "Oswald", sans-serif; }
+      .controls { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-top: 22px; }
+      .division-control { width: min(310px, 100%); }
+      .division-control label { display: block; margin: 0 0 8px; color: var(--muted); font-size: 11px; }
+      select { height: 42px; font-size: 13px; }
+      button {
+        min-width: 190px;
+        height: 46px;
+        padding: 0 20px;
+        border: 0;
+        border-radius: 4px;
+        color: #11150f;
+        background: var(--lime);
+        font: 700 12px "DM Mono", monospace;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: filter .15s, transform .15s;
+      }
+      button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+      button:disabled { opacity: .65; cursor: wait; transform: none; }
+      .message { min-height: 20px; margin: 14px 0 0; color: #ff9a94; font-size: 13px; }
+      .result { margin-top: 24px; }
+      .result[hidden] { display: none; }
+      .result-head { display: flex; justify-content: space-between; align-items: start; gap: 20px; padding: 25px 26px; border-bottom: 1px solid var(--line); }
+      .result-head h2 { margin: 8px 0 0; font: 600 28px "Oswald", sans-serif; text-transform: uppercase; }
+      .favored-label { color: var(--lime); }
+      .division-pill { padding: 7px 10px; border: 1px solid #414940; border-radius: 3px; color: #bac4bc; font: 10px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
+      .probabilities { display: grid; grid-template-columns: 1fr 1fr; }
+      .probability { padding: 24px 26px; }
+      .probability + .probability { border-left: 1px solid var(--line); }
+      .fighter-name { font-size: 13px; font-weight: 600; }
+      .prob-value { margin: 8px 0; font: 600 42px "Oswald", sans-serif; }
+      .probability.red .prob-value { color: var(--red); }
+      .probability.blue .prob-value { color: var(--blue); }
+      .bar { height: 5px; overflow: hidden; background: #313832; border-radius: 5px; }
+      .bar-fill { height: 100%; border-radius: inherit; transition: width .3s; }
+      .red .bar-fill { background: var(--red); }
+      .blue .bar-fill { background: var(--blue); }
+      .odds-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 13px; color: var(--muted); font: 11px "DM Mono", monospace; }
+      .odds-row strong { color: var(--text); font-weight: 500; }
+      .stats-title { padding: 20px 26px 8px; color: var(--muted); font: 10px "DM Mono", monospace; letter-spacing: .12em; text-transform: uppercase; }
+      .stats-table { width: 100%; padding: 0 26px 20px; border-collapse: collapse; font-size: 12px; }
+      .stats-table td { padding: 11px 0; border-bottom: 1px solid #ffffff0e; }
+      .stats-table tr:last-child td { border-bottom: 0; }
+      .stats-table td:first-child { width: 40%; color: var(--muted); text-align: center; }
+      .stats-table td:nth-child(2) { text-align: right; }
+      .stats-table td:nth-child(3) { text-align: left; }
+      .stats-table .red-value { color: #ff7772; }
+      .stats-table .blue-value { color: #71b5ff; }
+      .model-note { margin: 0; padding: 15px 26px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.55; }
+      .foot { display: flex; justify-content: space-between; gap: 18px; margin-top: 24px; color: #717c73; font: 10px "DM Mono", monospace; letter-spacing: .05em; }
+      datalist { color: var(--text); }
+      @media (max-width: 650px) {
+        .shell { padding: 0 17px 45px; }
+        main { padding-top: 42px; }
+        .matchup { padding: 18px; }
+        .corner-grid { grid-template-columns: 1fr 38px 1fr; gap: 9px; }
+        input { padding: 0 10px; font-size: 13px; }
+        .versus { font-size: 14px; }
+        .controls { align-items: stretch; flex-direction: column; gap: 14px; }
+        .division-control, button { width: 100%; }
+        .result-head, .probability { padding: 20px; }
+        .stats-title { padding-left: 20px; }
+        .stats-table { padding: 0 20px 15px; }
+        .model-note { padding: 14px 20px; }
+        .top-note { font-size: 8px; text-align: right; }
+        .foot { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="brand"><div class="brand-mark"><span>O</span></div><span>OCTAGON</span></div>
+        <div class="top-note">UFC BOUT PREDICTOR &nbsp;·&nbsp; MODEL PREVIEW</div>
+      </header>
+      <main>
+        <section class="intro">
+          <div class="eyebrow">Matchup analysis / 01</div>
+          <h1>Step inside<br>the numbers.</h1>
+          <p>Build a fight-night matchup. Compare model-estimated win probability, implied odds, and the stats behind the pick.</p>
+        </section>
+
+        <form id="predict-form" class="card matchup">
+          <div class="corner-grid">
+            <div>
+              <label class="corner-label corner-red" for="red-fighter">Red corner</label>
+              <div class="field-wrap"><input id="red-fighter" list="fighter-options" placeholder="Search a fighter…" autocomplete="off" required minlength="2"></div>
+            </div>
+            <div class="versus">VS</div>
+            <div>
+              <label class="corner-label corner-blue" for="blue-fighter">Blue corner</label>
+              <div class="field-wrap"><input id="blue-fighter" list="fighter-options" placeholder="Search a fighter…" autocomplete="off" required minlength="2"></div>
+            </div>
+          </div>
+          <datalist id="fighter-options"></datalist>
+          <div class="controls">
+            <div class="division-control">
+              <label for="weight-class">Weight class <span id="division-hint">(auto from shared history)</span></label>
+              <select id="weight-class"><option value="">Auto — shared division</option></select>
+            </div>
+            <button id="submit-button" type="submit">Analyze matchup <span aria-hidden="true">↗</span></button>
+          </div>
+          <p id="message" class="message" role="status"></p>
+        </form>
+
+        <section id="result" class="card result" aria-live="polite" hidden>
+          <div class="result-head">
+            <div>
+              <div class="eyebrow">Model pick</div>
+              <h2><span class="favored-label" id="winner"></span> <span style="color:#a0aaa2">favored</span></h2>
+            </div>
+            <div class="division-pill" id="result-division"></div>
+          </div>
+          <div class="probabilities">
+            <div class="probability red">
+              <div class="fighter-name" id="red-name"></div>
+              <div class="prob-value" id="red-prob"></div>
+              <div class="bar"><div class="bar-fill" id="red-bar"></div></div>
+              <div class="odds-row"><span>AMERICAN <strong id="red-american"></strong></span><span>DECIMAL <strong id="red-decimal"></strong></span></div>
+            </div>
+            <div class="probability blue">
+              <div class="fighter-name" id="blue-name"></div>
+              <div class="prob-value" id="blue-prob"></div>
+              <div class="bar"><div class="bar-fill" id="blue-bar"></div></div>
+              <div class="odds-row"><span>AMERICAN <strong id="blue-american"></strong></span><span>DECIMAL <strong id="blue-decimal"></strong></span></div>
+            </div>
+          </div>
+          <div class="stats-title">Recorded fighter stats</div>
+          <table class="stats-table"><tbody id="stats-body"></tbody></table>
+          <p class="model-note" id="model-note"></p>
+        </section>
+        <div class="foot"><span>HISTORICAL UFC DATA · LOGISTIC REGRESSION</span><span>PROBABILITIES ARE ESTIMATES, NOT BETTING ADVICE</span></div>
+      </main>
+    </div>
+    <script>
+      const form = document.querySelector("#predict-form");
+      const inputs = [document.querySelector("#red-fighter"), document.querySelector("#blue-fighter")];
+      const datalist = document.querySelector("#fighter-options");
+      const divisionSelect = document.querySelector("#weight-class");
+      const message = document.querySelector("#message");
+      const result = document.querySelector("#result");
+      let searchTimeout;
+
+      async function loadWeightClasses() {
+        try {
+          const [menResponse, womenResponse] = await Promise.all([
+            fetch("/api/weight-classes?gender=Men"),
+            fetch("/api/weight-classes?gender=Women"),
+          ]);
+          if (!menResponse.ok || !womenResponse.ok) throw new Error("Could not load weight classes.");
+          const [men, women] = await Promise.all([menResponse.json(), womenResponse.json()]);
+          for (const [label, classes] of [["Men", men.weight_classes], ["Women", women.weight_classes]]) {
+            const group = document.createElement("optgroup");
+            group.label = label;
+            for (const weightClass of classes) {
+              const option = document.createElement("option");
+              option.value = weightClass;
+              option.textContent = weightClass;
+              group.append(option);
+            }
+            divisionSelect.append(group);
+          }
+        } catch (error) {
+          message.textContent = error.message;
+        }
+      }
+
+      inputs.forEach((input) => input.addEventListener("input", () => {
+        clearTimeout(searchTimeout);
+        if (input.value.trim().length < 2) return;
+        searchTimeout = setTimeout(async () => {
+          try {
+            const response = await fetch(`/api/fighters?q=${encodeURIComponent(input.value.trim())}`);
+            if (!response.ok) throw new Error("Could not load fighter matches.");
+            const data = await response.json();
+            datalist.replaceChildren(...data.fighters.map((name) => {
+              const option = document.createElement("option");
+              option.value = name;
+              return option;
+            }));
+          } catch (error) {
+            message.textContent = error.message;
+          }
+        }, 180);
+      }));
+
+      function americanOdds(value) {
+        return value > 0 ? `+${value}` : String(value);
+      }
+
+      function formatStat(value, digits = 1) {
+        return value == null ? "—" : Number(value).toFixed(digits);
+      }
+
+      loadWeightClasses();
+
+      function renderStats(red, blue) {
+        const rows = [
+          ["Record", `${red.wins ?? "—"}–${red.losses ?? "—"}`, `${blue.wins ?? "—"}–${blue.losses ?? "—"}`],
+          ["Age", formatStat(red.age, 0), formatStat(blue.age, 0)],
+          ["Height", `${formatStat(red.height_cm)} cm`, `${formatStat(blue.height_cm)} cm`],
+          ["Reach", `${formatStat(red.reach_cm)} cm`, `${formatStat(blue.reach_cm)} cm`],
+          ["Stance", red.stance ?? "—", blue.stance ?? "—"],
+          ["Sig. strikes / min", formatStat(red.significant_strikes_per_minute, 2), formatStat(blue.significant_strikes_per_minute, 2)],
+          ["Sig. strike accuracy", red.significant_strike_accuracy == null ? "—" : `${Math.round(red.significant_strike_accuracy * 100)}%`, blue.significant_strike_accuracy == null ? "—" : `${Math.round(blue.significant_strike_accuracy * 100)}%`],
+          ["Takedowns / 15 min", formatStat(red.takedowns_per_15_min, 2), formatStat(blue.takedowns_per_15_min, 2)],
+        ];
+        document.querySelector("#stats-body").replaceChildren(...rows.map(([label, redValue, blueValue]) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${label}</td><td class="red-value"></td><td class="blue-value"></td>`;
+          row.children[1].textContent = redValue;
+          row.children[2].textContent = blueValue;
+          return row;
+        }));
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        message.textContent = "";
+        result.hidden = true;
+        const button = document.querySelector("#submit-button");
+        button.disabled = true;
+        button.textContent = "Analyzing…";
+        try {
+          const payload = {
+            red_fighter: inputs[0].value.trim(),
+            blue_fighter: inputs[1].value.trim(),
+          };
+          if (divisionSelect.value) payload.weight_class = divisionSelect.value;
+          const response = await fetch("/api/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.detail ?? "Prediction request failed.");
+          document.querySelector("#winner").textContent = data.predicted_winner;
+          document.querySelector("#result-division").textContent = data.weight_class;
+          document.querySelector("#red-name").textContent = `${data.red_fighter.name} · RED`;
+          document.querySelector("#blue-name").textContent = `${data.blue_fighter.name} · BLUE`;
+          for (const corner of ["red", "blue"]) {
+            const probability = data[`probability_${corner}`];
+            document.querySelector(`#${corner}-prob`).textContent = `${(probability * 100).toFixed(1)}%`;
+            document.querySelector(`#${corner}-bar`).style.width = `${probability * 100}%`;
+            document.querySelector(`#${corner}-american`).textContent = americanOdds(data.odds[corner].american);
+            document.querySelector(`#${corner}-decimal`).textContent = data.odds[corner].decimal.toFixed(2);
+          }
+          renderStats(data.red_fighter, data.blue_fighter);
+          document.querySelector("#model-note").textContent =
+            `${data.caveat} Holdout accuracy: ${(data.model_metrics.accuracy * 100).toFixed(1)}%; balanced accuracy: ${(data.model_metrics.balanced_accuracy * 100).toFixed(1)}%.`;
+          result.hidden = false;
+        } catch (error) {
+          message.textContent = error.message;
+        } finally {
+          button.disabled = false;
+          button.innerHTML = 'Analyze matchup <span aria-hidden="true">↗</span>';
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -2,16 +2,11 @@
 """Train and evaluate a logistic regression model for UFC bout winners."""
 
 from __future__ import annotations
-
 import argparse
 import json
 from pathlib import Path
 from typing import Any
-
 import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -19,62 +14,18 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-
+from ufc_pred_model.model import (
+    CATEGORICAL_FEATURES,
+    FEATURES,
+    NUMERIC_FEATURES,
+    TARGET,
+    build_model,
+)
 
 DEFAULT_DATASET = (
     Path(__file__).resolve().parents[1]
-    / "data/UFC-dataset/Large-set/large_dataset.csv"
+    / "data/large_clean.csv"
 )
-TARGET = "winner"
-NUMERIC_FEATURES = [
-    "wins_total_diff",
-    "losses_total_diff",
-    "age_diff",
-    "height_diff",
-    "weight_diff",
-    "reach_diff",
-    "SLpM_total_diff",
-    "SApM_total_diff",
-    "sig_str_acc_total_diff",
-    "td_acc_total_diff",
-    "str_def_total_diff",
-    "td_def_total_diff",
-    "sub_avg_diff",
-    "td_avg_diff",
-]
-CATEGORICAL_FEATURES = ["weight_class", "gender", "r_stance", "b_stance"]
-FEATURES = NUMERIC_FEATURES + CATEGORICAL_FEATURES
-
-
-def build_model() -> Pipeline:
-    """Create a preprocessing and logistic-regression pipeline."""
-    numeric = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", StandardScaler()),
-        ]
-    )
-    categorical = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("one_hot", OneHotEncoder(handle_unknown="ignore")),
-        ]
-    )
-    preprocess = ColumnTransformer(
-        [
-            ("numeric", numeric, NUMERIC_FEATURES),
-            ("categorical", categorical, CATEGORICAL_FEATURES),
-        ]
-    )
-    return Pipeline(
-        [
-            ("preprocess", preprocess),
-            ("classifier", LogisticRegression(max_iter=2_000, class_weight="balanced")),
-        ]
-    )
-
-
 def load_data(path: Path) -> pd.DataFrame:
     data = pd.read_csv(path)
     required = set(FEATURES + [TARGET])
@@ -86,18 +37,17 @@ def load_data(path: Path) -> pd.DataFrame:
         raise ValueError(f"{path} contains no Red/Blue winner rows")
     return data
 
-
-def train_and_evaluate(
-    data: pd.DataFrame, test_size: float = 0.2
-) -> tuple[Pipeline, dict[str, float]]:
+def train_and_evaluate(data: pd.DataFrame, test_size: float = 0.2) -> tuple[Pipeline, dict[str, float]]:
     """Fit on the earlier rows and evaluate on the later rows."""
     if not 0 < test_size < 1:
         raise ValueError("test_size must be between 0 and 1")
-    split_at = int(len(data) * (1 - test_size))
-    if split_at < 2 or split_at >= len(data) - 1:
+    
+    holdout_size = int(len(data) * test_size)
+
+    if holdout_size < 2 or holdout_size >= len(data) - 1:
         raise ValueError("dataset is too small for the requested time split")
 
-    train, test = data.iloc[:split_at], data.iloc[split_at:]
+    train, test = data.iloc[holdout_size:], data.iloc[:holdout_size]
     model = build_model()
     model.fit(train[FEATURES], train[TARGET])
     predictions = model.predict(test[FEATURES])
@@ -109,8 +59,9 @@ def train_and_evaluate(
     }
 
     print(f"Rows: {len(data)} (train={len(train)}, test={len(test)})")
-    print("Time split: existing row order, no shuffling")
+    print("Time split: older training rows, newest holdout rows; no shuffling")
     print("Metrics:")
+
     for name, value in metrics.items():
         print(f"  {name}: {value:.4f}")
     print("\nClassification report:")
@@ -144,7 +95,6 @@ def parse_args() -> argparse.Namespace:
         help="JSON object containing matchup features; prints one prediction",
     )
     return parser.parse_args()
-
 
 def main() -> None:
     args = parse_args()

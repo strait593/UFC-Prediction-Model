@@ -10,12 +10,38 @@ existing pandas and scikit-learn dependencies.
 From the repository root:
 
 ```bash
-python scripts/logistic_regression_bout_model.py
+uv run python scripts/logistic_regression_bout_model.py
 ```
 
 The script reports accuracy, balanced accuracy, ROC AUC (for a Red win), and a
 classification report. A different dataset or holdout size can be selected with
 `--dataset` and `--test-size`.
+
+## Prediction app
+
+Install/sync the project dependencies and start the FastAPI app:
+
+```bash
+uv sync
+uv run uvicorn ufc_pred_model.api:app --reload
+```
+
+Open <http://127.0.0.1:8000> for the browser prototype. Search for fighters
+from the included bout dataset, select Red and Blue corners, and optionally
+choose a weight class. When omitted, the app chooses the division most often
+shared in their recorded bouts. The JSON API is available at `/docs`:
+
+- `GET /api/fighters?q=Justin` searches dataset fighter names.
+- `GET /api/weight-classes?gender=Men` lists recorded divisions.
+- `POST /api/predict` accepts `{"red_fighter":"Justin Gaethje","blue_fighter":"Ilia Topuria"}`.
+- `GET /api/health` reports model availability and holdout metrics.
+
+The app trains the existing logistic-regression model from the tracked large
+bout dataset when it starts. Fighter statistics come from each fighter's first
+appearance in the dataset's current row order. Probabilities and their implied
+American/decimal odds are model estimates, not sportsbook lines; they are not
+calibrated betting advice. The prototype currently only recognizes fighter
+names present in that dataset.
 
 ## Assumptions and modeling choices
 
@@ -27,10 +53,10 @@ classification report. A different dataset or holdout size can be selected with
 - Missing numeric values are median-imputed; missing categorical values use the
   most frequent value. Numeric features are standardized and categoricals are
   one-hot encoded. Unknown categories at prediction time are ignored.
-- The tracked large CSV has no bout-date column. Its existing row/event order is
-  therefore treated as chronological order: the first 80% is training data and
-  the final 20% is the time-based holdout, with no shuffling. For production
-  use, add a verified date column and sort by it before splitting.
+- The tracked large CSV has no bout-date column and is ordered newest to oldest.
+  Its oldest 80% (the final rows) is used for training and its newest 20% (the
+  first rows) is the holdout, with no shuffling. For production use, add a
+  verified date column and sort by it before splitting.
 - This is an initial baseline, not a calibrated betting or ranking system.
   Fighter-stat snapshots and the dataset's ordering should be independently
   verified before drawing conclusions from metrics.
@@ -65,7 +91,7 @@ The training script can score a JSON object with the same feature names:
 Save that as `bout.json`, then run:
 
 ```bash
-python scripts/logistic_regression_bout_model.py --predict-json bout.json
+uv run python scripts/logistic_regression_bout_model.py --predict-json bout.json
 ```
 
 The output includes the predicted corner and probabilities for both corners.
