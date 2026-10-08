@@ -1,0 +1,14 @@
+.git
+.gitignore
+.python-version
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.venv
+venv
+.uv
+*.egg
+.pytest_cache
+.ipynb_checkpoints
+*.ipynb
