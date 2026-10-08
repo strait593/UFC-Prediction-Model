@@ -1,5 +1,8 @@
 # UFC Logistic Regression Modeling Snippet
 
+I am pleased to demonstrate - UFC Prediction model. I have been working for a few days on the model itself and the API part for a about a week. This is a fun project however, it's not aimed at job recruiters,
+job postings or anything that benefits me commercially, it's mine created by me for me for one of the things I love the most - mixed martial arts. Please do enjoy it tho :)
+
 This is a small, runnable starting point for predicting whether the red or blue
 corner wins a UFC bout. It uses the tracked
 [`large_dataset.csv`](data/UFC-dataset/Large-set/large_dataset.csv) and the
